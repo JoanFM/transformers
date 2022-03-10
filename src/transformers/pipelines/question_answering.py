@@ -394,6 +394,8 @@ class QuestionAnsweringPipeline(ChunkPipeline):
             # Generate mask
             undesired_tokens_mask = undesired_tokens == 0.0
 
+            logits_start = start_
+            logits_end = end_
             # Make sure non-context indexes in the tensor cannot contribute to the softmax
             start_ = np.where(undesired_tokens_mask, -10000.0, start_)
             end_ = np.where(undesired_tokens_mask, -10000.0, end_)
@@ -409,6 +411,8 @@ class QuestionAnsweringPipeline(ChunkPipeline):
             start_[0, 0] = end_[0, 0] = 0.0
 
             starts, ends, scores = self.decode(start_, end_, top_k, max_answer_len, undesired_tokens)
+
+            logits_score = logits_start[0][starts[0]] * logits_end[0][ends[0]]
             if not self.tokenizer.is_fast:
                 char_to_word = np.array(example.char_to_word_offset)
 
@@ -422,6 +426,7 @@ class QuestionAnsweringPipeline(ChunkPipeline):
                     answers.append(
                         {
                             "score": score.item(),
+                            "logits_score": logits_score,
                             "start": np.where(char_to_word == token_to_orig_map[s])[0][0].item(),
                             "end": np.where(char_to_word == token_to_orig_map[e])[0][-1].item(),
                             "answer": " ".join(example.doc_tokens[token_to_orig_map[s] : token_to_orig_map[e] + 1]),
@@ -465,6 +470,7 @@ class QuestionAnsweringPipeline(ChunkPipeline):
                     answers.append(
                         {
                             "score": score.item(),
+                            "logits_score": logits_score,
                             "start": start_index,
                             "end": end_index,
                             "answer": example.context_text[start_index:end_index],
