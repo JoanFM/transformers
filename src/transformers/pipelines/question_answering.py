@@ -412,7 +412,7 @@ class QuestionAnsweringPipeline(ChunkPipeline):
 
             starts, ends, scores = self.decode(start_, end_, top_k, max_answer_len, undesired_tokens)
 
-            logits_score = logits_start[0][starts[0]] * logits_end[0][ends[0]]
+            logits_score = logits_start[0][starts[0]] + logits_end[0][ends[0]]
             if not self.tokenizer.is_fast:
                 char_to_word = np.array(example.char_to_word_offset)
 
