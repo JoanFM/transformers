@@ -412,7 +412,6 @@ class QuestionAnsweringPipeline(ChunkPipeline):
 
             starts, ends, scores = self.decode(start_, end_, top_k, max_answer_len, undesired_tokens)
 
-            logits_score = logits_start[0][starts[0]] + logits_end[0][ends[0]]
             if not self.tokenizer.is_fast:
                 char_to_word = np.array(example.char_to_word_offset)
 
@@ -426,7 +425,10 @@ class QuestionAnsweringPipeline(ChunkPipeline):
                     answers.append(
                         {
                             "score": score.item(),
-                            "logits_score": logits_score,
+                            "start_token": starts[0],
+                            "end_token": ends[0],
+                            "logits_start": logits_start[0],
+                            "logits_end": logits_end[0],
                             "start": np.where(char_to_word == token_to_orig_map[s])[0][0].item(),
                             "end": np.where(char_to_word == token_to_orig_map[e])[0][-1].item(),
                             "answer": " ".join(example.doc_tokens[token_to_orig_map[s] : token_to_orig_map[e] + 1]),
@@ -470,7 +472,10 @@ class QuestionAnsweringPipeline(ChunkPipeline):
                     answers.append(
                         {
                             "score": score.item(),
-                            "logits_score": logits_score,
+                            "start_token": starts[0],
+                            "end_token": ends[0],
+                            "logits_start": logits_start[0],
+                            "logits_end": logits_end[0],
                             "start": start_index,
                             "end": end_index,
                             "answer": example.context_text[start_index:end_index],
